@@ -1,32 +1,51 @@
 # -*- coding: utf-8 -*-
-# I think this is all what was asked for? You didn't need it in an interactive
-#   format asking the user for inputs did you? 
+ 
 """
 Created on Sat Feb 21 10:22:32 2026
 
 @author: beaut
 """
 
-# Module 6 Assignment
+"""Utility functions for a simple text-based game.
 
-#welcome message
+This module contains helper functions for displaying welcome messages,
+printing a shop menu, purchasing items, and generating a random monster.
+It is designed to be imported into another file, such as game.py.
+
+Functions:
+    print_welcome(name, width)
+    print_shop_menu(item1_name, item1_price, item2_name, item2_price)
+    purchase_item(item_price, starting_money, quantity_to_purchase=1)
+    random_monster()
+
+Typical usage example:
+    import gamefunctions
+
+    gamefunctions.print_welcome("Beau", 20)
+    monster = gamefunctions.random_monster()
+    print(monster["name"])
+"""
+
+import random
+
+
+#game functions
 
 def print_welcome(name, width):
     """
     Prints a welcome message for the input name centered
     within a field of the specified width.
+    
+    Parameters:
+        name (str): The player's name.
+        width (int): The width of the printed field.
+
+    Returns:
+        None
     """
     message = f"Hello, {name}!"
     print(f"{message:^{width}}")
-
-print_welcome("Jim", 1)
-print()
-print_welcome('Jimmy', 20)
-print()
-print_welcome("Jimmer", 40)
-print()
-print()
-
+    
 #print shop
 def print_shop_menu(item1Name, item1Price, item2Name, item2Price):
     """
@@ -48,63 +67,27 @@ def print_shop_menu(item1Name, item1Price, item2Name, item2Price):
     print(f"| {item2Name:<12}${item2Price:>7.2f} |")
     print("\\----------------------/")
 
-print_shop_menu("Headly", 0.10, "New Sheriff", 1.234)
-print()
-
-print_shop_menu("Austen P. ", 300, "Mini-Me", 30.3030)
-print()
-
-print_shop_menu("Lightsaber", 450, "Sword", 20)
-print()
-
-
-
-
-
-# Module 5 Assignment - coded out with docstrings for simplicity.
-
-# Happy to resubmit without the docstrings if desired
-'''
-import random
-
 def purchase_item(itemPrice, startingMoney, quantityToPurchase=1): #the =1 sets default quantity to one
+    """
+    Calculate how many items can be purchased and how much money remains.
+
+    Parameters:
+        item_price (float): The cost of one item.
+        starting_money (float): The amount of money available.
+        quantity_to_purchase (int): The number of items requested.
+            Defaults to 1.
+
+    Returns:
+        tuple: A tuple containing:
+            num_purchased (int): The number of items actually purchased.
+            money_remaining (float): The amount of money left after purchase.
+            """
     max_num_purchase = startingMoney // itemPrice
     num_purchased = min(quantityToPurchase, max_num_purchase)
     money_remaining = startingMoney - (num_purchased * itemPrice)
     return num_purchased, money_remaining
-    
-startingMoney = 500
 
-lightsaber = 450
-quantityToPurchase = 1000
-num_purchased, money_remaining = purchase_item(lightsaber, startingMoney, quantityToPurchase)
-print(f'Starting Money: ${startingMoney}')
-print("Item purchased: Lightsaber")
-print(f'Number purchased: {num_purchased}')
-print(f"Money remaining: ${money_remaining}\n")
-
-
-sword = 20
-quantityToPurchase = 2
-num_purchased, money_remaining = purchase_item(sword, startingMoney, quantityToPurchase)
-print(f'Starting Money: ${startingMoney}')
-print('Item purchased: Sword')
-print(f'Number purchased: {num_purchased}')
-print(f"Money remaining: ${money_remaining}\n")
-
-AustenPowers = 300
-num_purchased, money_remaining = purchase_item(AustenPowers, startingMoney)
-print(f'Starting Money: ${startingMoney}')
-print('Accomplace purchased: Austen Powerovich')
-print(f'Number purchased: {num_purchased}')
-print(f"Money remaining: ${money_remaining}\n")
-
-print("And now... there be monsters\n")
-
-
-
-
-def new_random_monster():
+def random_monster():
     
     monster_type = random.choice(["Purple People Eater", "Politician", "Dr. Evil"])
     
@@ -134,34 +117,59 @@ def new_random_monster():
             "power" : random.randint(1,6),
             "money" : "One hundred, billion, gagillion dollars... and sharks with laser beams attached to their heads!"
             }
+ 
+def test_functions():
+    print_welcome("Jim", 1)
+    print()
+    print_welcome("Jimmy", 20)
+    print()
+    print_welcome("Jimmer", 40)
+    print()
+    print()
+
+    print_shop_menu("Headly", 0.10, "New Sheriff", 1.234)
+    print()
+
+    print_shop_menu("Austen P.", 300, "Mini-Me", 30.3030)
+    print()
+
+    print_shop_menu("Lightsaber", 450, "Sword", 20)
+    print()
+
+    starting_money = 500
+
+    num_purchased, money_remaining = purchase_item(450, starting_money, 1000)
+    print(f"Starting Money: ${starting_money}")
+    print("Item purchased: Lightsaber")
+    print(f"Number purchased: {num_purchased}")
+    print(f"Money remaining: ${money_remaining}\n")
+
+    num_purchased, money_remaining = purchase_item(20, starting_money, 2)
+    print(f"Starting Money: ${starting_money}")
+    print("Item purchased: Sword")
+    print(f"Number purchased: {num_purchased}")
+    print(f"Money remaining: ${money_remaining}\n")
+
+    num_purchased, money_remaining = purchase_item(300, starting_money)
+    print(f"Starting Money: ${starting_money}")
+    print("Item purchased: Austen Powerovich")
+    print(f"Number purchased: {num_purchased}")
+    print(f"Money remaining: ${money_remaining}\n")
+
+    print("And now... there be monsters\n")
+
+    for _ in range(3):
+        monster = random_monster()
+        print(monster["name"])
+        print(monster["description"])
+        print(f"Health: {monster['health']}")
+        print(f"Power: {monster['power']}")
+        print(f"Financial Resources: {monster['money']}")
+        print()
 
 
-m1 = new_random_monster()
-print(m1['name'])
-print(m1['description'])
-print(f'Health: {m1['health']}')
-print(f'Power: {m1['power']}')
-print(f'Financial Resources: {m1['money']}')
-print()
-
-m2 = new_random_monster()
-print(m2['name'])
-print(m2['description'])
-print(f'Health: {m2['health']}')
-print(f'Power: {m2['power']}')
-print(f'Financial Resources: {m2['money']}')
-print()
-
-m3 = new_random_monster()
-print(m3['name'])
-print(m3['description'])
-print(f'Health: {m3['health']}')
-print(f'Power: {m3['power']}')
-print(f'Financial Resources: {m3['money']}')
-print()
-
-
-'''
+if __name__ == "__main__":
+    test_functions()
 
 
 
