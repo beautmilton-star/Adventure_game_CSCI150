@@ -1,43 +1,34 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Mar 22 23:25:18 2026
-
-@author: beaut
-"""
 
 """Main game file that uses functions from gamefunctions.py."""
 
 import gamefunctions
 
 
+# -*- coding: utf-8 -*-
+"""Main game file that runs the town game loop."""
+
+import gamefunctions
+
 def main():
-    """Run a simple demo game using the imported module."""
+    """Run the main game loop."""
     name = input("Enter your name: ")
     gamefunctions.print_welcome(name, 30)
-    print()
 
-    gamefunctions.print_shop_menu("Potion", 10.00, "Sword", 25.00)
-    print()
+    hp = 30
+    gold = 10
 
-    starting_money = float(input("How much money do you have? "))
-    quantity = int(input("How many potions would you like to buy? "))
+    while True:
+        gamefunctions.display_town_menu(hp, gold)
+        choice = gamefunctions.get_valid_menu_choice(1, 3)
 
-    num_purchased, money_remaining = gamefunctions.purchase_item(
-        10.00, starting_money, quantity
-    )
-
-    print(f"You bought {num_purchased} potion(s).")
-    print(f"You have ${money_remaining} left.")
-    print()
-
-    monster = gamefunctions.random_monster()
-    print("A wild monster appears!")
-    print(monster["name"])
-    print(monster["description"])
-    print(f"Health: {monster['health']}")
-    print(f"Power: {monster['power']}")
-    print(f"Money: {monster['money']}")
-
+        if choice == "1":
+            hp, gold = gamefunctions.fight_monster(hp, gold)
+        elif choice == "2":
+            hp, gold = gamefunctions.sleep_in_town(hp, gold)
+        else:
+            print("Thanks for playing!")
+            break
 
 if __name__ == "__main__":
     main()
