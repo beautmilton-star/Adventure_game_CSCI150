@@ -4,31 +4,42 @@
 
 import gamefunctions
 
+name = input("Enter your character's name: ")
 
-# -*- coding: utf-8 -*-
-"""Main game file that runs the town game loop."""
+state = {
+    "player_name": name,
+    "player_hp": 30,
+    "player_max_hp": 30,
+    "player_gold": 100,
+    "player_inventory": [],
+    "equipped_weapon": None
+}
 
-import gamefunctions
+choice = ""
 
-def main():
-    """Run the main game loop."""
-    name = input("Enter your name: ")
-    gamefunctions.print_welcome(name, 30)
+while state["player_hp"] > 0 and choice != "6":
+    gamefunctions.print_character(state)
 
-    hp = 30
-    gold = 10
+    gamefunctions.display_town_menu(state)
+    choice = input("> ")
 
-    while True:
-        gamefunctions.display_town_menu(hp, gold)
-        choice = gamefunctions.get_valid_menu_choice(1, 3)
+    if choice == "1":
+        state = gamefunctions.fight_monster(state)
 
-        if choice == "1":
-            hp, gold = gamefunctions.fight_monster(hp, gold)
-        elif choice == "2":
-            hp, gold = gamefunctions.sleep_in_town(hp, gold)
-        else:
-            print("Thanks for playing!")
-            break
+    elif choice == "2":
+        state = gamefunctions.sleep_in_town(state)
 
-if __name__ == "__main__":
-    main()
+    elif choice == "3":
+        state = gamefunctions.shop_menu(state)
+
+    elif choice == "4":
+        gamefunctions.show_inventory(state)
+
+    elif choice == "5":
+        state = gamefunctions.equip_weapon(state)
+
+    elif choice == "6":
+        print("Goodbye.")
+
+if state["player_hp"] <= 0:
+    print("You have died. Game over.")

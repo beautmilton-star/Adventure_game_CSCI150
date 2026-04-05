@@ -23,6 +23,13 @@ Typical usage example:
 
 import random
 
+def print_character(state):
+    print("\n--- CHARACTER ---")
+    print(f"Name: {state['player_name']}")
+    print(f"HP: {state['player_hp']}")
+    print(f"Gold: {state['player_gold']}")
+    print("-----------------\n")
+
 def print_welcome(name, width):
     """
     Print a centered welcome message.
@@ -137,47 +144,32 @@ def get_valid_menu_choice(min_choice, max_choice):
                 return choice
         print("Invalid choice. Please try again.")
 
-def display_town_menu(current_hp, current_gold):
-    """
-    Display the town menu.
 
-    Parameters:
-        current_hp (int): Player's current HP.
-        current_gold (int): Player's current gold.
-
-    Returns:
-        None
-    """
+def display_town_menu(state):
+    
     print("\nYou are in town.")
-    print(f"Current HP: {current_hp}, Current Gold: {current_gold}")
+    print(f"Current HP: {state['player_hp']}, Current Gold: {state['player_gold']}")
     print("What would you like to do?")
     print("1) Leave town (Fight Monster)")
     print("2) Sleep (Restore HP for 5 Gold)")
-    print("3) Quit")
+    print("3) Shop")
+    print("4) Inventory")
+    print("5) Equip Weapon")
+    print("6) Quit")
 
-def sleep_in_town(current_hp, current_gold, max_hp=30, sleep_cost=5):
-    """
-    Restore HP if the player can afford to sleep.
-
-    Parameters:
-        current_hp (int): Player's current HP.
-        current_gold (int): Player's current gold.
-        max_hp (int): Maximum player HP.
-        sleep_cost (int): Gold required to sleep.
-
-    Returns:
-        tuple: Updated HP and gold.
-    """
-    if current_gold < sleep_cost:
+def sleep_in_town(state, sleep_cost=5):
+    if state["player_gold"] < sleep_cost:
         print("You do not have enough gold to sleep.")
-        return current_hp, current_gold
+        return state
 
-    if current_hp == max_hp:
+    if state["player_hp"] == state["player_max_hp"]:
         print("You are already at full health.")
-        return current_hp, current_gold
+        return state
 
     print("You sleep at the inn and wake up refreshed.")
-    return max_hp, current_gold - sleep_cost
+    state["player_gold"] -= sleep_cost
+    state["player_hp"] = state["player_max_hp"]
+    return state
 
 def display_fight_status(player_hp, monster):
     """
@@ -206,61 +198,70 @@ def get_fight_action():
     """
     return get_valid_menu_choice(1, 2)
 
-def do_combat_round(player_hp, monster):
-    """
-    Resolve one round of combat.
-
-    Parameters:
-        player_hp (int): Player's current HP.
-        monster (dict): Current monster.
-
-    Returns:
-        tuple: Updated player HP and monster dictionary.
-    """
+def do_combat_round(state, monster):
     player_damage = random.randint(3, 6)
+
+    weapon = state["equipped_weapon"]
+    if weapon:
+        player_damage += weapon["damageBonus"]
+        weapon["currentDurability"] -= 1
+
+        if weapon["currentDurability"] <= 0:
+            print(f"Your {weapon['name']} broke!")
+            state["player_inventory"].remove(weapon)
+            state["equipped_weapon"] = None
+
     monster_damage = monster["power"]
 
     monster["health"] -= player_damage
     print(f"You hit the {monster['name']} for {player_damage} damage.")
 
     if monster["health"] > 0:
-        player_hp -= monster_damage
+        state["player_hp"] -= monster_damage
         print(f"The {monster['name']} hits you for {monster_damage} damage.")
 
-    return player_hp, monster
+    return state, monster
 
-def fight_monster(player_hp, player_gold):
-    """
-    Run the combat loop against a random monster.
-
-    Parameters:
-        player_hp (int): Player's current HP.
-        player_gold (int): Player's current gold.
-
-    Returns:
-        tuple: Updated HP and gold after combat.
-    """
+def fight_monster(state):
     monster = random_monster()
 
-    while player_hp > 0 and monster["health"] > 0:
-        display_fight_status(player_hp, monster)
-        action = get_fight_action()
+    while state["player_hp"] > 0 and monster["health"] > 0:
+        display_fight_status(state["player_hp"], monster)
+
+        print("3) Use Special Item")
+
+        action = input("> ")
 
         if action == "1":
-            player_hp, monster = do_combat_round(player_hp, monster)
-        else:
+            state, monster = do_combat_round(state, monster)
+
+        elif action == "2":
             print("You ran away.")
             break
 
-    if player_hp <= 0:
-        print("Your character passed out.")
-        player_hp = 0
+        elif action == "3":
+            for i, item in enumerate(state["player_inventory"]):
+                if item["type"] == "special":
+                    use = input("Use special item? (y/n): ")
+                    if use == "y":
+                        state["player_inventory"].pop(i)
+                        print("Monster instantly defeated!")
+                        state["player_gold"] += monster["money"]
+                        return state
+                    break
+            else:
+                print("No special items.")
+
+    if state["player_hp"] <= 0:
+        state["player_hp"] = 0
+
     elif monster["health"] <= 0:
         print(f"You defeated the {monster['name']}!")
         print(f"You found {monster['money']} gold.")
-        player_gold += monster["money"]
+        state["player_gold"] += monster["money"]
 
-    return player_hp, player_gold
+    return state
+
 
 def test_functions():
     """
@@ -296,11 +297,101 @@ def test_functions():
 if __name__ == "__main__":
     test_functions()
 
+def shop_menu(state):
+    while True:
+        print("\n--- SHOP ---")
+        print(f"Gold: {state['player_gold']}")
+        print("1. Sword (25 gold)")
+        print("2. Magic Bomb (15 gold)")
+        print("3. Leave")
 
+        choice = input("> ")
 
+        if choice == "1":
+            if state["player_gold"] >= 25:
+                state["player_inventory"].append({
+                    "name": "sword",
+                    "type": "weapon",
+                    "damageBonus": 3,
+                    "maxDurability": 5,
+                    "currentDurability": 5,
+                    "equipped": False
+                })
+                state["player_gold"] -= 25
+                print("Bought sword.")
+            else:
+                print("Not enough gold.")
 
+        elif choice == "2":
+            if state["player_gold"] >= 15:
+                state["player_inventory"].append({
+                    "name": "magic bomb",
+                    "type": "special"
+                })
+                state["player_gold"] -= 15
+                print("Bought magic bomb.")
+            else:
+                print("Not enough gold.")
 
+        elif choice == "3":
+            return state
 
+def show_inventory(state):
+    print("\n--- INVENTORY ---")
+
+    if not state["player_inventory"]:
+        print("Empty.")
+        return
+
+    for i, item in enumerate(state["player_inventory"], 1):
+        line = f"{i}. {item['name']} ({item['type']})"
+
+        if item["type"] == "weapon":
+            line += f" | Durability {item['currentDurability']}/{item['maxDurability']}"
+            if item.get("equipped"):
+                line += " [EQUIPPED]"
+
+        print(line)
+
+def equip_weapon(state):
+    weapons = [
+        item for item in state["player_inventory"]
+        if item["type"] == "weapon" and item["currentDurability"] > 0
+    ]
+
+    if not weapons:
+        print("No usable weapons.")
+        return state
+
+    print("\nChoose weapon:")
+    print("0. None")
+
+    for i, w in enumerate(weapons, 1):
+        print(f"{i}. {w['name']}")
+
+    choice = input("> ")
+
+    if not choice.isdigit():
+        return state
+
+    choice = int(choice)
+
+    if choice == 0:
+        state["equipped_weapon"] = None
+        return state
+
+    if 1 <= choice <= len(weapons):
+        selected = weapons[choice - 1]
+
+        for item in state["player_inventory"]:
+            if item["type"] == "weapon":
+                item["equipped"] = False
+
+        selected["equipped"] = True
+        state["equipped_weapon"] = selected
+        print(f"Equipped {selected['name']}")
+
+    return state
 
 
 
