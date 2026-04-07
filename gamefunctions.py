@@ -22,6 +22,25 @@ Typical usage example:
 """
 
 import random
+import json
+
+def save_game(state, filename="savegame.json"):
+    """Save game state to JSON file."""
+    with open(filename, "w") as f:
+        json.dump(state, f, indent=4)
+    print(f"Game saved to {filename}")
+
+
+def load_game(filename="savegame.json"):
+    """Load game state from JSON file."""
+    try:
+        with open(filename, "r") as f:
+            state = json.load(f)
+        print(f"Game loaded from {filename}")
+        return state
+    except FileNotFoundError:
+        print("Save file not found. Starting new game.")
+        return None
 
 def print_character(state):
     print("\n--- CHARACTER ---")
@@ -155,7 +174,8 @@ def display_town_menu(state):
     print("3) Shop")
     print("4) Inventory")
     print("5) Equip Weapon")
-    print("6) Quit")
+    print("6) Save and Quit")
+    print("7) Quit Without Saving")
 
 def sleep_in_town(state, sleep_cost=5):
     if state["player_gold"] < sleep_cost:
