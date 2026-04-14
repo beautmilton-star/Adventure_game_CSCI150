@@ -3,6 +3,7 @@
 """Main game file that uses functions from gamefunctions.py."""
 
 import gamefunctions
+from WanderingMonster import WanderingMonster
 
 print("1) New Game")
 print("2) Load Game")
@@ -23,11 +24,32 @@ if start_choice == "2":
             "equipped_weapon": None,
             "map": {
                 "player_pos": [0, 0],
-                "town_pos": [0, 0],
-                "monster_pos": [5, 5]
-                }
+                "town_pos": [0, 0]
             }
-        
+        }
+
+        # initialize monsters for new game
+        state["monsters"] = [
+            WanderingMonster.random_spawn(
+                occupied=[],
+                forbidden=[tuple(state["map"]["town_pos"])],
+                grid_w=10,
+                grid_h=10
+            )
+        ]
+
+    else:
+        # handle loading old save that DOESN'T have monsters yet
+        if "monsters" not in state:
+            state["monsters"] = [
+                WanderingMonster.random_spawn(
+                    occupied=[],
+                    forbidden=[tuple(state["map"]["town_pos"])],
+                    grid_w=10,
+                    grid_h=10
+                )
+            ]
+
 else:
     name = input("Enter your character's name: ")
     state = {
@@ -39,10 +61,19 @@ else:
         "equipped_weapon": None,
         "map": {
             "player_pos": [0, 0],
-            "town_pos": [0, 0],
-            "monster_pos": [5, 5]
-            }
-            }
+            "town_pos": [0, 0]
+        }
+    }
+
+    # ✅ initialize monsters for new game
+    state["monsters"] = [
+        WanderingMonster.random_spawn(
+            occupied=[],
+            forbidden=[tuple(state["map"]["town_pos"])],
+            grid_w=10,
+            grid_h=10
+        )
+    ]
 
 choice = ""
 
@@ -57,15 +88,24 @@ while state["player_hp"] > 0 and choice not in ["6", "7"]:
 
         if result == "monster":
             state = gamefunctions.fight_monster(state)
+            player_pos = tuple(state["map"]["player_pos"])
 
-            # Move monster after fight
-            import random
-            while True:
-                new_pos = [random.randint(0, 9), random.randint(0, 9)]
-                if new_pos != state["map"]["player_pos"] and new_pos != state["map"]["town_pos"]:
-                    state["map"]["monster_pos"] = new_pos
-                    break
+        # remove defeated monster
+            state["monsters"] = [
+                m for m in state["monsters"]
+                if (m.x, m.y) != player_pos
+                ]
 
+        # respawn if none left
+            if len(state["monsters"]) == 0:
+                for _ in range(2):
+                    new_monster = WanderingMonster.random_spawn(
+                        occupied=[(m.x, m.y) for m in state["monsters"]],
+                        forbidden=[tuple(state["map"]["town_pos"])],
+                        grid_w=10,
+                        grid_h=10
+                        )
+                    state["monsters"].append(new_monster)
         elif result == "town":
             pass  # just go back to menu
 

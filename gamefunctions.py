@@ -23,19 +23,30 @@ Typical usage example:
 
 import random
 import json
+from WanderingMonster import WanderingMonster
 
 def save_game(state, filename="savegame.json"):
-    """Save game state to JSON file."""
-    with open(filename, "w") as f:
-        json.dump(state, f, indent=4)
-    print(f"Game saved to {filename}")
+    state_copy = state.copy()
 
+    # convert monsters to dicts
+    state_copy["monsters"] = [m.to_dict() for m in state["monsters"]]
+
+    with open(filename, "w") as f:
+        json.dump(state_copy, f, indent=4)
+
+    print(f"Game saved to {filename}")
 
 def load_game(filename="savegame.json"):
     """Load game state from JSON file."""
     try:
         with open(filename, "r") as f:
             state = json.load(f)
+            
+        if "monsters" in state:
+            state["monsters"] = [
+                WanderingMonster.from_dict(m)
+                for m in state["monsters"]
+            ]
         print(f"Game loaded from {filename}")
         return state
     except FileNotFoundError:
@@ -433,15 +444,13 @@ def move_player(state, direction):
 
     if [x, y] == state["map"]["town_pos"]:
         return "returned_to_town"
-    elif [x, y] == state["map"]["monster_pos"]:
-        return "monster_encounter"
+    
     else:
         return "moved"
 
 def draw_map(state):
     player = state["map"]["player_pos"]
     town = state["map"]["town_pos"]
-    monster = state["map"]["monster_pos"]
 
     print("\n--- MAP ---")
 
@@ -452,7 +461,7 @@ def draw_map(state):
                 row += "P "
             elif [x, y] == town:
                 row += "T "
-            elif [x, y] == monster:
+            elif any(m.x == x and m.y == y for m in state["monsters"]):
                 row += "M "
             else:
                 row += ". "
@@ -470,13 +479,34 @@ def map_interface(state):
             continue
 
         result = move_player(state, move)
+        
+        player_pos = tuple(state["map"]["player_pos"])
+
+        # combat check (REQUIRED by rubric)
+        for monster in state["monsters"]:
+            if (monster.x, monster.y) == player_pos:
+                print("A monster appears!")
+                return "monster"
+
+        # move monsters AFTER player moves
+        occupied_positions = [(m.x, m.y) for m in state["monsters"]]
+        town_pos = tuple(state["map"]["town_pos"])
+
+        for monster in state["monsters"]:
+            other_monsters = [
+                (m.x, m.y) for m in state["monsters"] if m != monster
+                ]
+
+            monster.move(
+                occupied=other_monsters,
+                forbidden=[player_pos, town_pos],
+                grid_w=10,
+                grid_h=10
+                )
 
         if result == "returned_to_town":
             print("You returned to town.")
             return "town"
 
-        elif result == "monster_encounter":
-            print("A monster appears!")
-            return "monster"
 
 
