@@ -169,7 +169,7 @@ def display_town_menu(state):
     print("\nYou are in town.")
     print(f"Current HP: {state['player_hp']}, Current Gold: {state['player_gold']}")
     print("What would you like to do?")
-    print("1) Leave town (Fight Monster)")
+    print("1) Explore (Find Monster Or Return to Town)")
     print("2) Sleep (Restore HP for 5 Gold)")
     print("3) Shop")
     print("4) Inventory")
@@ -413,10 +413,70 @@ def equip_weapon(state):
 
     return state
 
+def move_player(state, direction):
+    x, y = state["map"]["player_pos"]
 
+    if direction == "w":  # up
+        if y > 0:
+            y -= 1
+    elif direction == "s":  # down
+        if y < 9:
+            y += 1
+    elif direction == "a":  # left
+        if x > 0:
+            x -= 1
+    elif direction == "d":  # right
+        if x < 9:
+            x += 1
 
+    state["map"]["player_pos"] = [x, y]
 
+    if [x, y] == state["map"]["town_pos"]:
+        return "returned_to_town"
+    elif [x, y] == state["map"]["monster_pos"]:
+        return "monster_encounter"
+    else:
+        return "moved"
 
+def draw_map(state):
+    player = state["map"]["player_pos"]
+    town = state["map"]["town_pos"]
+    monster = state["map"]["monster_pos"]
 
+    print("\n--- MAP ---")
+
+    for y in range(10):
+        row = ""
+        for x in range(10):
+            if [x, y] == player:
+                row += "P "
+            elif [x, y] == town:
+                row += "T "
+            elif [x, y] == monster:
+                row += "M "
+            else:
+                row += ". "
+        print(row)
+
+def map_interface(state):
+    while True:
+        draw_map(state)
+
+        print("Move with WASD (w=up, s=down, a=left, d=right)")
+        move = input("> ").lower()
+
+        if move not in ["w", "a", "s", "d"]:
+            print("Invalid move.")
+            continue
+
+        result = move_player(state, move)
+
+        if result == "returned_to_town":
+            print("You returned to town.")
+            return "town"
+
+        elif result == "monster_encounter":
+            print("A monster appears!")
+            return "monster"
 
 

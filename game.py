@@ -20,9 +20,14 @@ if start_choice == "2":
             "player_max_hp": 30,
             "player_gold": 100,
             "player_inventory": [],
-            "equipped_weapon": None
-        }
-
+            "equipped_weapon": None,
+            "map": {
+                "player_pos": [0, 0],
+                "town_pos": [0, 0],
+                "monster_pos": [5, 5]
+                }
+            }
+        
 else:
     name = input("Enter your character's name: ")
     state = {
@@ -31,8 +36,13 @@ else:
         "player_max_hp": 30,
         "player_gold": 100,
         "player_inventory": [],
-        "equipped_weapon": None
-    }
+        "equipped_weapon": None,
+        "map": {
+            "player_pos": [0, 0],
+            "town_pos": [0, 0],
+            "monster_pos": [5, 5]
+            }
+            }
 
 choice = ""
 
@@ -43,7 +53,21 @@ while state["player_hp"] > 0 and choice not in ["6", "7"]:
     choice = gamefunctions.get_valid_menu_choice(1, 7)
 
     if choice == "1":
-        state = gamefunctions.fight_monster(state)
+        result = gamefunctions.map_interface(state)
+
+        if result == "monster":
+            state = gamefunctions.fight_monster(state)
+
+            # Move monster after fight
+            import random
+            while True:
+                new_pos = [random.randint(0, 9), random.randint(0, 9)]
+                if new_pos != state["map"]["player_pos"] and new_pos != state["map"]["town_pos"]:
+                    state["map"]["monster_pos"] = new_pos
+                    break
+
+        elif result == "town":
+            pass  # just go back to menu
 
     elif choice == "2":
         state = gamefunctions.sleep_in_town(state)
