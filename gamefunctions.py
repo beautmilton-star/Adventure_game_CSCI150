@@ -180,7 +180,7 @@ def display_town_menu(state):
     print("\nYou are in town.")
     print(f"Current HP: {state['player_hp']}, Current Gold: {state['player_gold']}")
     print("What would you like to do?")
-    print("1) Explore (Find Monster Or Return to Town)")
+    print("1) Explore (Find Monster or Return to Town)")
     print("2) Sleep (Restore HP for 5 Gold)")
     print("3) Shop")
     print("4) Inventory")
@@ -427,26 +427,36 @@ def equip_weapon(state):
 def move_player(state, direction):
     x, y = state["map"]["player_pos"]
 
+    # calculate new position first
+    new_x, new_y = x, y
+
     if direction == "w":  # up
         if y > 0:
-            y -= 1
+            new_y -= 1
     elif direction == "s":  # down
         if y < 9:
-            y += 1
+            new_y += 1
     elif direction == "a":  # left
         if x > 0:
-            x -= 1
+            new_x -= 1
     elif direction == "d":  # right
         if x < 9:
-            x += 1
+            new_x += 1
 
-    state["map"]["player_pos"] = [x, y]
+    new_pos = (new_x, new_y)
 
-    if [x, y] == state["map"]["town_pos"]:
+    # block mountains BEFORE moving
+    if new_pos in state["mountains"]:
+        print("You can't move there — mountains block your path.")
+        return "blocked"
+
+    # now update position
+    state["map"]["player_pos"] = [new_x, new_y]
+
+    if [new_x, new_y] == state["map"]["town_pos"]:
         return "returned_to_town"
-    
-    else:
-        return "moved"
+
+    return "moved"
 
 def draw_map(state):
     player = state["map"]["player_pos"]
@@ -461,6 +471,10 @@ def draw_map(state):
                 row += "P "
             elif [x, y] == town:
                 row += "T "
+            elif (x, y) in state["mountains"]:
+                row += "^ "
+            elif (x, y) in state["pits"]:
+                row += "O "
             elif any(m.x == x and m.y == y for m in state["monsters"]):
                 row += "M "
             else:
@@ -480,9 +494,21 @@ def map_interface(state):
 
         result = move_player(state, move)
         
+        if result == "blocked":
+            continue
+        
         player_pos = tuple(state["map"]["player_pos"])
 
-        # combat check (REQUIRED by rubric)
+        # pit check (instant death)
+        if player_pos in state["pits"]:
+            print("You fell into a pit! Game over.")
+            state["player_hp"] = 0
+            return "dead"
+
+        
+        player_pos = tuple(state["map"]["player_pos"])
+
+        # combat check
         for monster in state["monsters"]:
             if (monster.x, monster.y) == player_pos:
                 print("A monster appears!")
@@ -499,7 +525,7 @@ def map_interface(state):
 
             monster.move(
                 occupied=other_monsters,
-                forbidden=[player_pos, town_pos],
+                forbidden=[player_pos, town_pos] + state["mountains"] + state["pits"],
                 grid_w=10,
                 grid_h=10
                 )

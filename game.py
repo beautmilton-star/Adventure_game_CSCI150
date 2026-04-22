@@ -12,6 +12,9 @@ start_choice = input("> ")
 
 if start_choice == "2":
     state = gamefunctions.load_game()
+    if state is not None:
+        state["mountains"] = [(3,3), (3,4), (3,5)]
+        state["pits"] = [(6,6), (2,7)]
 
     if state is None:
         name = input("Enter your character's name: ")
@@ -27,7 +30,9 @@ if start_choice == "2":
                 "town_pos": [0, 0]
             }
         }
-
+        state["mountains"] = [(3,3), (3,4), (3,5)]
+        state["pits"] = [(6,6), (2,7)]
+        
         # initialize monsters for new game
         state["monsters"] = [
             WanderingMonster.random_spawn(
@@ -64,8 +69,9 @@ else:
             "town_pos": [0, 0]
         }
     }
-
-    # ✅ initialize monsters for new game
+    state["mountains"] = [(3,3), (3,4), (3,5)]
+    state["pits"] = [(6,6), (2,7)]
+    # initialize monsters for new game
     state["monsters"] = [
         WanderingMonster.random_spawn(
             occupied=[],
@@ -85,6 +91,9 @@ while state["player_hp"] > 0 and choice not in ["6", "7"]:
 
     if choice == "1":
         result = gamefunctions.map_interface(state)
+        
+        if result == "dead":
+            break
 
         if result == "monster":
             state = gamefunctions.fight_monster(state)
